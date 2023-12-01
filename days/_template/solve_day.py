@@ -9,10 +9,10 @@ class DayX(Solver):
         self.my_base_path = __file__
         self.day = day
 
-    def part1(self, data: List) -> None:
+    def part1(self, data: List[str]) -> None:
         pass
 
-    def part2(self, data: List) -> None:
+    def part2(self, data: List[str]) -> None:
         pass
 
 

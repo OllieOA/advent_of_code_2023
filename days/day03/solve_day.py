@@ -17,6 +17,11 @@ class Day03(Solver):
         self.day = day
 
     def __seek_for_number_lr(self, start_pos: Tuple[int]) -> Tuple[List[Tuple[int]], int]:
+        """Here, we start from a position and then seek left and right for
+        digits (until hitting anything not in NUMS). This could be compressed
+        into a single while loop definition in a for loop over directions
+        [-1, 1], but cbf.
+        """
         tracked_indices = []
         curr_pos = start_pos
         num_str = self.arr[curr_pos[0], curr_pos[1]]
@@ -50,6 +55,15 @@ class Day03(Solver):
         return tracked_indices, int(num_str)
 
     def part1(self, data: List[str]) -> None:
+        """We seek for any symbol character (note, we are using the negative
+        here, and finding anything not in the digits or the period `.` as we
+        do not know the full list of symbols used).
+
+        From this point, we consider each candidate adjacent position, and then
+        check if there is a digit present. If so, we extract it using the above
+        function, and importantly, we track what positions we have visited.
+        This is important because we use this to not double up any extractions.
+        """
         self.arr = NumpyArrayParser(data).parse()
 
         part_nums = []
@@ -75,6 +89,11 @@ class Day03(Solver):
         return sum(part_nums)
 
     def part2(self, data: List[str]) -> None:
+        """Very similar to the above, though we only need to act when the
+        symbol is a *. If there are exactly two numbers found using the same
+        logic as in part 1, then we consider it a valid gear ratio and add it
+        to the list.
+        """
         self.arr = NumpyArrayParser(data).parse()
 
         gear_ratios = []

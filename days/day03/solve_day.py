@@ -5,6 +5,7 @@ import numpy as np
 
 from solver import Solver
 from utils.parsers import NumpyArrayParser
+import utils.grid_utils as grid_utils
 
 NUMS = "1234567890"
 
@@ -14,21 +15,6 @@ class Day03(Solver):
         super().__init__(use_sample, run_each)
         self.my_base_path = __file__
         self.day = day
-
-    def __get_adjacent_positions(self, pos: Tuple[int]) -> List[Tuple]:
-        x_pos = [pos[0] - 1, pos[0], pos[0] + 1]
-        y_pos = [pos[1] - 1, pos[1], pos[1] + 1]
-
-        all_combos = []
-        for x in x_pos:
-            for y in y_pos:
-                if x < 0 or x >= self.arr.shape[0] or y < 0 or y >= self.arr.shape[1]:
-                    continue
-                if all([x == pos[0], y == pos[1]]):
-                    continue
-                all_combos.append((x, y))
-
-        return all_combos
 
     def __seek_for_number_lr(self, start_pos: Tuple[int]) -> Tuple[List[Tuple[int]], int]:
         tracked_indices = []
@@ -73,7 +59,7 @@ class Day03(Solver):
                 if self.arr[i, j] in NUMS + ".":
                     continue
                 # Now, seek for any valid numbers
-                candidate_positions = self.__get_adjacent_positions((i, j))
+                candidate_positions = grid_utils.get_adjacent_positions((i, j), self.arr.shape)
                 for check_pos in candidate_positions:
                     if check_pos in considered_positions:
                         continue
@@ -102,7 +88,7 @@ class Day03(Solver):
                 # Now, as before seek for any valid numbers. Repeated code but
                 # small enough to not get a refactor
 
-                candidate_positions = self.__get_adjacent_positions((i, j))
+                candidate_positions = grid_utils.get_adjacent_positions((i, j), self.arr.shape)
                 for check_pos in candidate_positions:
                     if check_pos in considered_positions:
                         continue

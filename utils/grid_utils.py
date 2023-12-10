@@ -26,7 +26,7 @@ def get_adjacent_positions(
                 continue
             if all([x == pos[0], y == pos[1]]):
                 continue
-            if not include_diagonals and (abs(x) == 1 and abs(y) == 1):
+            if not include_diagonals and (abs(x - x_pos[1]) == 1 and abs(y - y_pos[1]) == 1):
                 continue
             all_combos.append((x, y))
 

@@ -12,7 +12,7 @@ class BaseParser:
 
 
 class NewLineListParser(BaseParser):
-    def parse(self) -> List[str]:
+    def parse(self) -> np.array:
         all_groups = []
         curr_group = []
 

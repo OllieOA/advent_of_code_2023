@@ -41,7 +41,6 @@ class Day10(Solver):
         There is some luck with the input checking order here, because we are
         not excluding the case where the first adjacent node does not connect
         to the start node - these SHOULD be excluded.
-
         """
         start_node = tuple([int(x) for x in np.where(grid == "S")])
 

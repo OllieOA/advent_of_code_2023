@@ -1,6 +1,20 @@
 # Using a numpy grid, here are some useful common functions
 
-from typing import List, Tuple
+from typing import List, Tuple, Iterable, Dict
+
+
+class GridVisualiser:
+    def __init__(self, grid: Iterable, spec: Dict):
+        self.grid = grid
+        self.spec = spec
+
+    def visualise_grid(self):
+        display_grid = "\n"
+        for row in self.grid:
+            for col in row:
+                display_grid += self.spec.get(col, self.grid[row, col])
+            display_grid += "\n"
+        print(display_grid)
 
 
 def get_adjacent_positions(

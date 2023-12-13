@@ -114,9 +114,9 @@ class Day12(Solver):
 
     def __make_all_valid_arrangements(self, data: List[str], repeats: int = 1) -> int:
         all_valid_arrangements = 0
-        with cf.ThreadPoolExecutor(max_workers=10) as pool:
+        with cf.ThreadPoolExecutor(max_workers=2) as pool:
             executions = []
-            for line in tqdm(data):
+            for line in data:
                 executions.append(pool.submit(self.__process_single_arrangement, line, repeats))
 
             for execution in tqdm(executions):

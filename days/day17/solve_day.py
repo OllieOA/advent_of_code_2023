@@ -1,4 +1,4 @@
-from math import sqrt
+from queue import PriorityQueue
 from typing import List, Tuple
 
 import numpy as np
@@ -7,44 +7,38 @@ from solver import Solver
 from utils.parsers import NumpyArrayParser
 from utils.grid_utils import get_adjacent_positions
 
-TUPLES_TO_DIRECTIONS = {
-    (-1, 0): "N",
-    (1, 0): "S",
-    (0, 1): "E",
-    (0, -1): "W",
-}
-
-DIRECTIONS_TO_TUPLES = {y: x for x, y in TUPLES_TO_DIRECTIONS.items()}
-
-DIST_BIAS = 0.1
-
 
 class GridNode:
+    """This is just a data object which tracks the unique things required for a
+    priority queue. We use an "explored_mark" to cache which is just a string
+    jammed together with the properties which can also be used as __eq__, and a
+    __lt__ method is needed for the priority queue.
+    """
+
     def __init__(self, parent: Tuple = None, position: Tuple = None):
         self.parent = parent
         self.position = position
 
         self.path_cost = 0
-        self.heuristic = 0
-        self.total_cost = 0
+        self.straight_path_num = 0
 
         self.enter_direction = None
         if not parent is None:
-            self.enter_direction = TUPLES_TO_DIRECTIONS[
-                tuple([n1 - n2 for n1, n2 in zip(position, parent.position)])
-            ]
+            self.enter_direction = (
+                position[0] - parent.position[0],
+                position[1] - parent.position[1],
+            )
 
-    def __repr__(self) -> str:
-        return self.__str__()
+            if self.enter_direction == self.parent.enter_direction:
+                self.straight_path_num = self.parent.straight_path_num + 1
 
-    def __str__(self) -> str:
-        return f"Node {self.position} - {self.enter_direction}, path cost {self.path_cost}, heuristic val {self.heuristic:0.2f} = {self.total_cost:0.2f}"
+        self.explored_mark = f"{self.position}{self.enter_direction}{self.straight_path_num}"
 
-    def get_total_cost(self) -> float:
-        self.total_cost = self.path_cost + self.heuristic
+    def __eq__(self, other: object) -> bool:
+        self.explored_mark == other.explored_mark
 
-    def dist_to(self, pos: Tuple[int]) -> float:
-        return sqrt(sum([(n1 - n2) ** 2 for n1, n2 in zip(self.position, pos)])) * DIST_BIAS
+    def __lt__(self, other):
+        return self.path_cost < other.path_cost
 
 
 class Day17(Solver):
@@ -54,16 +48,34 @@ class Day17(Solver):
         self.day = day
 
     def pathfind_astar(
-        self, grid: np.array, start_node: GridNode, goal_node: GridNode
-    ) -> List[GridNode]:
-        frontier = [start_node]
-        explored = []
+        self,
+        grid: np.array,
+        start_node: GridNode,
+        goal_node: GridNode,
+        max_straight: int,
+        min_before_turn: int,
+    ) -> GridNode:
+        """This was originally called astar because it implemented A*, but I
+        found no real benefit in the heuristic for this work, so it turned into
+        Dijkstra's.
+        """
+        frontier = PriorityQueue()
+        frontier.put((0, start_node))
+        dists = {start_node.explored_mark: 0}
 
-        while len(frontier) > 0:
-            curr_node = frontier.pop(np.argmin([x.total_cost for x in frontier]))
-            explored.append(curr_node)
+        loop_idx = -1
+
+        while not frontier.empty():
+            loop_idx += 1
+            path_cost, curr_node = frontier.get()
+            if loop_idx % 10000 == 0:
+                print(
+                    f"\t{abs(curr_node.position[0] - goal_node.position[0]) + abs(curr_node.position[1] - goal_node.position[1]):.0f} away...",
+                    end="\r",
+                )
 
             if curr_node.position == goal_node.position:
+                # return curr_node
                 path = []
                 curr_node_backtrack = curr_node
                 while curr_node_backtrack is not None:
@@ -71,62 +83,42 @@ class Day17(Solver):
                     curr_node_backtrack = curr_node_backtrack.parent
                 return path
 
-            adjacent_positions = get_adjacent_positions(
-                curr_node.position, grid.shape, include_diagonals=False
-            )
+            if path_cost > dists[curr_node.explored_mark]:
+                continue
+
+            if curr_node.straight_path_num < (min_before_turn - 1) and curr_node.parent is not None:
+                adjacent_positions = get_adjacent_positions(
+                    curr_node.position,
+                    grid.shape,
+                    include_diagonals=False,
+                    direction=curr_node.enter_direction,
+                )
+            else:
+                adjacent_positions = get_adjacent_positions(
+                    curr_node.position, grid.shape, include_diagonals=False
+                )
 
             for pos in adjacent_positions:
                 if curr_node.parent is not None:
                     if pos == curr_node.parent.position:
-                        continue
+                        continue  # Walked back into the same square
 
                 child_node = GridNode(curr_node, pos)
 
-                already_explored = False
-                for explored_node in explored:
-                    if (
-                        explored_node.position == child_node.position
-                        and explored_node.enter_direction == child_node.enter_direction
-                    ):
-                        already_explored = True
-                        break
-                if already_explored:
+                if child_node.straight_path_num >= max_straight:
                     continue
 
-                child_node.path_cost = curr_node.path_cost + grid[child_node.position]
-                child_node.heuristic = child_node.dist_to(goal_node.position)
-                child_node.get_total_cost()
+                child_node.path_cost = curr_node.path_cost + grid[pos]
 
-                better_path_cost = True
-                for frontier_node in frontier:
-                    if (
-                        child_node.position == frontier_node.position
-                        and child_node.path_cost > frontier_node.path_cost
-                    ):
-                        better_path_cost = False
-                        break
-
-                if not better_path_cost:
+                if (
+                    child_node.explored_mark in dists
+                    and dists[child_node.explored_mark] <= child_node.path_cost
+                ):
                     continue
+                dists[child_node.explored_mark] = child_node.path_cost
 
-                # Check if this is valid by following parents back in a line
-                line_created = [child_node.parent]
-                for _ in range(2):
-                    next_parent = line_created[-1].parent
-                    if next_parent is None:
-                        break  # Not enough to draw a line
+                frontier.put((child_node.path_cost, child_node))
 
-                    line_created.append(next_parent)
-
-                line_too_long = False
-                if len(line_created) == 3:
-                    line_too_long = all(
-                        [x.enter_direction == child_node.enter_direction for x in line_created]
-                    )
-                    if line_too_long:
-                        continue
-
-                frontier.append(child_node)
         raise ValueError("Did not find solution!")
 
     def part1(self, data: List[str]) -> None:
@@ -135,14 +127,21 @@ class Day17(Solver):
         goal_node = GridNode(None, (grid.shape[0] - 1, grid.shape[1] - 1))
         start_node = GridNode(None, (0, 0))
 
-        full_path = self.pathfind_astar(grid, start_node, goal_node)
-        for node in full_path:
-            grid[node.position] = 0
-        print(grid)
-        return full_path[0].path_cost
+        last_node = self.pathfind_astar(
+            grid, start_node, goal_node, max_straight=3, min_before_turn=0
+        )
+        return last_node.path_cost
 
     def part2(self, data: List[str]) -> None:
-        pass
+        grid = NumpyArrayParser(data).parse()
+        grid = np.array(grid, dtype=int)
+        goal_node = GridNode(None, (grid.shape[0] - 1, grid.shape[1] - 1))
+        start_node = GridNode(None, (0, 0))
+
+        last_node = self.pathfind_astar(
+            grid, start_node, goal_node, max_straight=10, min_before_turn=4
+        )
+        return last_node.path_cost
 
 
 def solve_day(day: int, use_sample: bool, run_each: List[bool]):

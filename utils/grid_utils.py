@@ -18,7 +18,10 @@ class GridVisualiser:
 
 
 def get_adjacent_positions(
-    pos: Tuple[int], arr_shape: Tuple[int], include_diagonals: bool = True
+    pos: Tuple[int],
+    arr_shape: Tuple[int],
+    include_diagonals: bool = True,
+    direction: Tuple = None,
 ) -> List[Tuple]:
     """Get all adjacent positions ()
 
@@ -30,18 +33,32 @@ def get_adjacent_positions(
     Returns:
         List[Tuple]: _description_
     """
-    x_pos = [pos[0] - 1, pos[0], pos[0] + 1]
-    y_pos = [pos[1] - 1, pos[1], pos[1] + 1]
+    if direction:
+        positions = [(pos[0] + direction[0], pos[1] + direction[1])]
+    else:
+        positions = [
+            (pos[0] + 1, pos[1]),
+            (pos[0] - 1, pos[1]),
+            (pos[0], pos[1] + 1),
+            (pos[0], pos[1] - 1),
+        ]
 
-    all_combos = []
-    for x in x_pos:
-        for y in y_pos:
-            if x < 0 or x >= arr_shape[0] or y < 0 or y >= arr_shape[1]:
-                continue
-            if all([x == pos[0], y == pos[1]]):
-                continue
-            if not include_diagonals and (abs(x - x_pos[1]) == 1 and abs(y - y_pos[1]) == 1):
-                continue
-            all_combos.append((x, y))
+    if include_diagonals and not direction:
+        diag_positions = [
+            (pos[0] - 1, pos[1] - 1),
+            (pos[0] - 1, pos[1] + 1),
+            (pos[0] + 1, pos[1] - 1),
+            (pos[0] + 1, pos[1] + 1),
+        ]
+        positions.extend(diag_positions)
 
-    return all_combos
+    if include_diagonals and direction:
+        raise ValueError("Cannot consider both diagonals and a given direction")
+
+    filtered_positions = []
+    for pos in positions:
+        x, y = pos
+        if x < 0 or x >= arr_shape[0] or y < 0 or y >= arr_shape[1]:
+            continue
+        filtered_positions.append(pos)
+    return filtered_positions

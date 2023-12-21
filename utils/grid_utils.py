@@ -62,3 +62,7 @@ def get_adjacent_positions(
             continue
         filtered_positions.append(pos)
     return filtered_positions
+
+
+def get_manhattan_dist(point1: Tuple[int], point2: Tuple[int]) -> int:
+    return sum([abs(p1 - p2) for p1, p2 in zip(point1, point2)])

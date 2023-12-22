@@ -40,6 +40,7 @@ class Workflow:
         self.conditions = []
         self.exit_address = ""
 
+        # TODO: https://pastebin.com/XLzg3V9P
         self.next_cases = {
             "x": {},
             "m": {},
@@ -119,7 +120,7 @@ class Day19(Solver):
         tested_cases = set([])
 
         while len(test_cases) > 0:
-
+            pass
 
 
 def solve_day(day: int, use_sample: bool, run_each: List[bool]):

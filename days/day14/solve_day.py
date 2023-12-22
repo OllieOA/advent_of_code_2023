@@ -2,7 +2,6 @@ from collections import Counter
 from typing import List, Dict
 
 import numpy as np
-from tqdm import tqdm
 
 from solver import Solver
 from utils.parsers import NumpyArrayParser
@@ -43,6 +42,8 @@ class Day14(Solver):
             mutate_grid[:, col] = np.array(new_col)
 
         return mutate_grid
+
+    def __run_cycle(self)
 
     def part1(self, data: List[str]) -> None:
         grid = NumpyArrayParser(data).parse()

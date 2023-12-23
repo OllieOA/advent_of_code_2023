@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from math import lcm
 from typing import List, Tuple
 
 from solver import Solver
@@ -51,8 +52,8 @@ class Module:
         return self.__str__()
 
     def populate_inputs(self, all_modules: List["Module"]) -> None:
-        if not self.module_type == ModuleType.CONJUNCTION:
-            return
+        # if not self.module_type == ModuleType.CONJUNCTION:
+        #     return
 
         for module in all_modules:
             if self.module_name in module.output_connections:
@@ -83,7 +84,6 @@ class Module:
                     raise SolvedException
                 return []
 
-        # return [(x, self.get_state, self.module_name) for x in self.output_connections]
         return [(x, self.active, self.module_name) for x in self.output_connections]
 
 
@@ -107,7 +107,11 @@ class Day20(Solver):
                 if output_module not in module_names:
                     missing_modules.append(f"{output_module} -> ")
 
-        module_list.extend([Module(x) for x in missing_modules])
+        missing_module_list = [Module(x) for x in missing_modules]
+
+        module_list.extend(missing_module_list)
+        for missing_module in missing_module_list:
+            missing_module.populate_inputs(module_list)
         self.modules = {x.module_name: x for x in module_list}
 
     def __get_next_instructions(self, instruction_list: List[Tuple]) -> List[Tuple]:
@@ -147,23 +151,71 @@ class Day20(Solver):
     def part2(self, data: List[str]) -> None:
         self.__make_modules(data)
 
-        button_pushes = 0
-        high_pulse_count = 0
-        low_pulse_count = 0
+        # Backpropagate from rx to find the necessary state of each combinator
+        rx_module = self.modules["rx"]
 
-        while True:
+        high_pulse_received = {x: -1 for x in rx_module.input_connections.keys()}
+        low_pulse_received = {
+            x: -1
+            for x in self.modules[list(high_pulse_received.keys())[0]].input_connections.keys()
+        }
+
+        loop_count = -1
+
+        while not all([x != -1 for x in list(low_pulse_received.values())]):
+            loop_count += 1
             instruction_list = [("broadcaster", False, "button")]
-            button_pushes += 1
-            while len(instruction_list) > 0:
-                try:
-                    next_instructions, high_pulses, low_pulses = self.__get_next_instructions(
-                        instruction_list
-                    )
-                except SolvedException:
-                    return button_pushes
-                instruction_list.extend(next_instructions)
-                high_pulse_count += high_pulses
-                low_pulse_count += low_pulses
+            next_instructions, _, _ = self.__get_next_instructions(instruction_list)
+            instruction_list.extend(next_instructions)
+
+            for module in high_pulse_received.keys():
+                if self.modules[module].active:
+                    high_pulse_received[module] = loop_count
+
+            for module in low_pulse_received.keys():
+                if not self.modules[module].active:
+                    high_pulse_received[module] = loop_count
+
+        return lcm(list(low_pulse_received.values()))
+
+        # for module in self.modules.values():
+        #     if module.module_type == ModuleType.CONJUNCTION:
+        #         connection_conjunctions = [
+        #             x
+        #             for x in module.input_connections.keys()
+        #             if self.modules[x].module_type == ModuleType.CONJUNCTION
+        #         ]
+        #         if len(connection_conjunctions) > 1:
+        #             print(f"{module} HAS MORE THAN ONE CONJUNCTION INPUT")
+
+        # if self.modules[curr_connector_module].module_type != ModuleType.CONJUNCTION:
+        #     continue
+
+        # conjunction_inputs = [
+        #     x
+        #     for x in curr_connector_module.input_connections.keys()
+        #     if self.modules[x].module_type == ModuleType.CONJUNCTION
+        # ]
+
+        # if required_pulse:  # is high
+        #     low_pulse_required.extend(conjunction_inputs)
+        # else:
+        #     # Required pulse is low, so all must be high
+        #     high_pulse_required.extend(conjunction_inputs)
+
+        # while True:
+        #     instruction_list = [("broadcaster", False, "button")]
+        #     button_pushes += 1
+        #     while len(instruction_list) > 0:
+        #         try:
+        #             next_instructions, high_pulses, low_pulses = self.__get_next_instructions(
+        #                 instruction_list
+        #             )
+        #         except SolvedException:
+        #             return button_pushes
+        #         instruction_list.extend(next_instructions)
+        #         high_pulse_count += high_pulses
+        #         low_pulse_count += low_pulses
 
 
 def solve_day(day: int, use_sample: bool, run_each: List[bool]):

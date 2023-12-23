@@ -44,12 +44,11 @@ class Day14(Solver):
         """As above, we tilt and rotate. This order is important as the final
         state is NOT a northward tilt in part 2 (as it was for part 1)
         """
-        cycling_grid = np.copy(grid)
         for _idx in range(4):
-            cycling_grid = self.__tilt_mirror(cycling_grid)
-            cycling_grid = np.rot90(cycling_grid, k=3)
+            grid = self.__tilt_mirror(grid)
+            grid = np.rot90(grid, k=3)
 
-        return cycling_grid
+        return grid
 
     def part1(self, data: List[str]) -> None:
         grid = NumpyArrayParser(data).parse()

@@ -13,16 +13,13 @@ class Day14(Solver):
         self.my_base_path = __file__
         self.day = day
 
-    def __tilt_mirror_with_cache(self, grid: np.array, cache: Dict) -> np.array:
-        grid_str = str(grid)
-        if grid_str in cache:
-            return cache[grid_str]
-
-        new_grid = self.__tilt_mirror(grid)
-        cache[grid_str] = new_grid
-        return new_grid
-
     def __tilt_mirror(self, grid: np.array) -> np.array:
+        """This function simply rotates the grid in accordance with the rules
+        described. We do this by finding the blockers (edge of board or square
+        boulder) and then populating the "sub column" with the correct amount.
+        Note that this only works to the "north", so when we eventually run
+        the full cycle for part 2, we will need to rotate the array.
+        """
         mutate_grid = np.copy(grid)
 
         for col in range(mutate_grid.shape[1]):
@@ -43,7 +40,16 @@ class Day14(Solver):
 
         return mutate_grid
 
-    def __run_cycle(self)
+    def __run_cycle(self, grid: np.array) -> np.array:
+        """As above, we tilt and rotate. This order is important as the final
+        state is NOT a northward tilt in part 2 (as it was for part 1)
+        """
+        cycling_grid = np.copy(grid)
+        for _idx in range(4):
+            cycling_grid = self.__tilt_mirror(cycling_grid)
+            cycling_grid = np.rot90(cycling_grid, k=3)
+
+        return cycling_grid
 
     def part1(self, data: List[str]) -> None:
         grid = NumpyArrayParser(data).parse()
@@ -54,6 +60,13 @@ class Day14(Solver):
         return total_load
 
     def part2(self, data: List[str]) -> None:
+        """Obviously, we cannot run this 1 billion times. We assume there is a
+        pattern and only rotate until we find it. Once we see that a single
+        hashed pattern is repeated 3 times, we can safely identify the repeat.
+
+        Then, we identify the offset (everything that has occured once) and can
+        apply a modulo to the 1b.
+        """
         grid = NumpyArrayParser(data).parse()
 
         original_grid = np.copy(grid)
@@ -61,49 +74,22 @@ class Day14(Solver):
         total_full_cycles = 1000000000
         pattern_found = False
         all_grid_configs = []
-        turns = 0
         while not pattern_found:
-            new_grid = self.__tilt_mirror(grid)
-            if turns % 4 == 3:
-                north_aligned_grid_str = str(np.rot90(new_grid, k=turns)) + str((turns % 4))
-                # print(f"\ncycle {turns//4+1}\n{north_aligned_grid_str}\n")
-                all_grid_configs.append(north_aligned_grid_str)
-                grid_repeats = Counter(all_grid_configs)
-                pattern_found = max(grid_repeats.values()) == 5
-            grid = np.rot90(new_grid, k=3)
-            turns += 1
+            grid = self.__run_cycle(grid)
+            boulders = np.where(grid == "O")
+            grid_hash_list = [(x, y) for x, y in zip(boulders[0], boulders[1])]
+            all_grid_configs.append(tuple(grid_hash_list))
+            grid_repeats = Counter(all_grid_configs)
+            pattern_found = max(grid_repeats.values()) == 3
 
-        # raise
         init_offset = len([x for x in grid_repeats.values() if x == 1])
-        sequence_len = len([x for x in grid_repeats.values() if x == 4]) + 1
+        sequence_len = len([x for x in grid_repeats.values() if x == 2]) + 1
 
-        cycles_required = total_full_cycles % sequence_len + init_offset
-        print(
-            f"{cycles_required} modifications required - {init_offset} init offset, {sequence_len} seq len"
-        )
-
-        turns = 0
-        cycles = 0
         grid = np.copy(original_grid)
-        cache = {}
-        # while cycles < cycles_required:
-        for c in range(cycles_required):
-            while turns < 4:
-                new_grid = self.__tilt_mirror_with_cache(grid, cache)
-                if turns % 4 == 3:
-                    cycles += 1
-                    # print(f"POST CYCLE {cycles} GRID\n{np.rot90(new_grid, k=turns)}\n")
-                grid = np.rot90(new_grid, k=3)
-                turns += 1
-            # print(np.rot90(new_grid, k=turns - 1))
-            turns = 0
+        for idx in range(init_offset + (total_full_cycles - init_offset) % sequence_len):
+            grid = self.__run_cycle(grid)
 
-        new_grid = np.rot90(new_grid, k=turns - 1)
-        print(f"FINAL STATE\n{new_grid}")
-
-        total_load = sum([new_grid.shape[1] - x for x in np.where(new_grid == "O")[0]])
-        # print(f"{i}: {total_load}")
-
+        total_load = sum([grid.shape[1] - x for x in np.where(grid == "O")[0]])
         return total_load
 
 

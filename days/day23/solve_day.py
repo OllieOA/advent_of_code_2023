@@ -149,7 +149,10 @@ class Day23(Solver):
             self.graph.add_edge(*edge, weight=cost)
 
     def __solve_graph(self, start_node, goal_node) -> int:
+        subpath_cache = {}
         max_len = 0
+        all_paths = set([])
+        path_lens = set([])
         for path in nx.all_simple_paths(
             self.graph, source=self.nodes[start_node], target=self.nodes[goal_node]
         ):
@@ -159,6 +162,10 @@ class Day23(Solver):
                     (self.nodes_lookup[path[idx]], self.nodes_lookup[path[idx + 1]])
                 ]
             max_len = max(max_len, total_len)
+            all_paths.add((x for x in path))
+            path_lens.add(total_len)
+
+        print(f"TOTAL PATHS {len(all_paths)}, TOTAL LENGTHS {len(path_lens)}")
 
         return max_len
 

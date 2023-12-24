@@ -51,9 +51,7 @@ class Workflow:
         for cd in conditions.split(","):
             if ":" not in cd:
                 self.exit_address = cd
-                # if cd == "A":
-                #     # Get all previous cases that are accepted
-                #     pass
+                break
             test_condition, addr_if_true = cd.split(":")
             new_cd = {
                 "attribute": test_condition[0],
@@ -110,17 +108,24 @@ class Day19(Solver):
         workflow_lookup = {x.name: x for x in workflows}
 
         valid_ranges = {
-            "x": [range(1, 4001)],
-            "m": [range(1, 4001)],
-            "a": [range(1, 4001)],
-            "s": [range(1, 4001)],
+            "x": [(1, 4000)],
+            "m": [(1, 4000)],
+            "a": [(1, 4000)],
+            "s": [(1, 4000)],
         }
 
-        test_cases = [("in", valid_ranges)]
-        tested_cases = set([])
+        test_cases = ["in"]
 
         while len(test_cases) > 0:
-            pass
+            # Determine the split based on the workflow
+            curr_workflow = test_cases.pop(0)
+            curr_exit_addr = workflow_lookup[curr_workflow].exit_address
+            curr_conditions = workflow_lookup[curr_workflow].conditions
+
+            for condition in curr_conditions:
+                target_attr = condition["attribute"]
+
+            print(workflow_lookup[curr_workflow].conditions, curr_exit_addr)
 
 
 def solve_day(day: int, use_sample: bool, run_each: List[bool]):

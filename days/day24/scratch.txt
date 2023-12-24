@@ -1,0 +1,39 @@
+Hailstone A: id0
+Hailstone B: id1
+Hailstones' paths will cross inside the test area (at x=14.333, y=15.333).
+
+Hailstone A: id0
+Hailstone B: id2
+Hailstones' paths will cross inside the test area (at x=11.667, y=16.667).
+
+Hailstone A: id0
+Hailstone B: id3
+Hailstones' paths will cross outside the test area (at x=6.2, y=19.4).
+
+Hailstone A: id0
+Hailstone B: id4
+Hailstones' paths crossed in the past for hailstone A.
+
+Hailstone A: id1
+Hailstone B: id2
+Hailstones' paths are parallel; they never intersect.
+
+Hailstone A: id1
+Hailstone B: id3
+Hailstones' paths will cross outside the test area (at x=-6, y=-5).
+
+Hailstone A: id1
+Hailstone B: id4
+Hailstones' paths crossed in the past for both hailstones.
+
+Hailstone A: id2
+Hailstone B: id3
+Hailstones' paths will cross outside the test area (at x=-2, y=3).
+
+Hailstone A: id2
+Hailstone B: id4
+Hailstones' paths crossed in the past for hailstone B.
+
+Hailstone A: id3
+Hailstone B: id4
+Hailstones' paths crossed in the past for both hailstones.

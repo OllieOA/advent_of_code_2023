@@ -86,28 +86,11 @@ class Day21(Solver):
         adjacent_garden_tile_lookup = {}
         start_node = (tuple([int(x) for x in np.where(grid == "S")]), (0, 0))
 
-        # NOT POSSIBLE
-        # for i in range(grid.shape[0]):
-        #     for j in range(grid.shape[1]):
-        #         curr_start_node = (i, j)
-        #         adjacent_garden_tile_lookup[curr_start_node] = []
-        #         adjacent_positions_and_maps = self.__get_adjacent_positions_and_maps(
-        #             curr_start_node,
-        #             grid.shape,
-        #         )
+        # This solution is mathematical. We can use the property that all grids
+        # are always reachable in the least number of steps in the input, due
+        # to the empty diagonals and vertial/horizontals
 
-        #         for adjacent_position, adjacent_map in adjacent_positions_and_maps:
-        #             if grid[adjacent_position] != "#":
-        #                 adjacent_garden_tile_lookup[curr_start_node].append(
-        #                     (adjacent_position, adjacent_map)
-        #                 )
-
-        # curr_steps = [start_node]
-        # for idx in range(X_P2):
-        #     next_steps = []
-        #     for step in curr_steps:
-        #         for next_pos, map_modifier in adjacent_garden_tile_lookup[step]:
-        #             next_map = (n1 + n2 for n1, n2 in zip(step[1], map_modifier))
+        target_steps = 26501365
 
 
 def solve_day(day: int, use_sample: bool, run_each: List[bool]):

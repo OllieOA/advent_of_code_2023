@@ -1,6 +1,9 @@
 import json
+import math
 import re
 from typing import List
+
+import networkx as nx
 
 from solver import Solver
 from utils.parsers import NewLineListParser
@@ -107,25 +110,97 @@ class Day19(Solver):
         workflows = [Workflow(x) for x in workflow_specs]
         workflow_lookup = {x.name: x for x in workflows}
 
+        graph = nx.DiGraph()
+
+        nodes = list(workflow_lookup.keys()) + ["A", "R"]
+
+        graph.add_nodes_from(nodes)
+
+        for workflow in workflows:
+            opposite_conditions = []
+            for condition in workflow.conditions:
+                edge_if_true = (workflow.name, condition["addr_if_true"])
+                true_edge_attributes = [
+                    {
+                        "part_type": condition["attribute"],
+                        "condition": condition["eval_statement"][1],
+                        "value": int(condition["eval_statement"][2:]),
+                    }
+                ]
+
+                graph.add_edge(*edge_if_true, conditions=true_edge_attributes)
+
+                if ">" in condition["eval_statement"]:
+                    opposite_condition = "<="
+                else:
+                    opposite_condition = ">=" + condition["eval_statement"].replace("n<", "")
+
+                val = int(condition["eval_statement"][2:])
+                opposite_conditions.append(
+                    {
+                        "part_type": condition["attribute"],
+                        "condition": opposite_condition,
+                        "value": int(val),
+                    }
+                )
+            graph.add_edge(*(workflow.name, workflow.exit_address), conditions=opposite_conditions)
+
         valid_ranges = {
-            "x": [(1, 4000)],
-            "m": [(1, 4000)],
-            "a": [(1, 4000)],
-            "s": [(1, 4000)],
+            "x": [1, 4000],
+            "m": [1, 4000],
+            "a": [1, 4000],
+            "s": [1, 4000],
         }
 
-        test_cases = ["in"]
+        all_edge_attr = nx.get_edge_attributes(graph, "conditions")
 
-        while len(test_cases) > 0:
-            # Determine the split based on the workflow
-            curr_workflow = test_cases.pop(0)
-            curr_exit_addr = workflow_lookup[curr_workflow].exit_address
-            curr_conditions = workflow_lookup[curr_workflow].conditions
+        all_paths_to_accepted = nx.all_simple_paths(graph, "in", "A")
+        for path in all_paths_to_accepted:
+            for edge_idx in range(len(path) - 1):
+                curr_edge = (path[edge_idx], path[edge_idx + 1])
+                edge_attrs = all_edge_attr[curr_edge]
 
-            for condition in curr_conditions:
-                target_attr = condition["attribute"]
+                for edge_attr in edge_attrs:
+                    attribute = edge_attr["part_type"]
+                    condition = edge_attr["condition"]
+                    val = edge_attr["value"]
 
-            print(workflow_lookup[curr_workflow].conditions, curr_exit_addr)
+                    if ">" in condition:
+                        extra_offset = 0
+                        if "=" in condition:
+                            extra_offset = 1
+                        next_val = val + extra_offset
+                        if next_val >= valid_ranges[attribute][1]:
+                            continue  # This is not a valid way to get to A
+                        valid_ranges[attribute][0] = max(
+                            valid_ranges[attribute][0], (val + extra_offset)
+                        )
+                    elif "<" in condition:
+                        extra_offset = 0
+                        if "=" in condition:
+                            extra_offset = -1
+                        next_val = val + extra_offset
+                        if next_val <= valid_ranges[attribute][0]:
+                            continue  # This is not a valid way to get to A
+                        valid_ranges[attribute][1] = min(
+                            valid_ranges[attribute][1], (val + extra_offset)
+                        )
+        # 3766094127300
+        # 167409079868000
+        return math.prod([y - x + 1 for x, y in valid_ranges.values()])
+
+        # test_cases = ["in"]
+
+        # while len(test_cases) > 0:
+        #     # Determine the split based on the workflow
+        #     curr_workflow = test_cases.pop(0)
+        #     curr_exit_addr = workflow_lookup[curr_workflow].exit_address
+        #     curr_conditions = workflow_lookup[curr_workflow].conditions
+
+        #     for condition in curr_conditions:
+        #         target_attr = condition["attribute"]
+
+        #     print(workflow_lookup[curr_workflow].conditions, curr_exit_addr)
 
 
 def solve_day(day: int, use_sample: bool, run_each: List[bool]):
